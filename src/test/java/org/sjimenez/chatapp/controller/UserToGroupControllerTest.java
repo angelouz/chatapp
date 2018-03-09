@@ -15,12 +15,19 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.sjimenez.chatapp.controllers.UserToGroupController;
 import org.sjimenez.chatapp.delegate.GroupDelegate;
 import org.sjimenez.chatapp.model.Group;
 import org.sjimenez.chatapp.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -29,17 +36,28 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public class UserToGroupControllerTest {
-	@Mock
-	private GroupDelegate groupDelegate;
-
-	@InjectMocks
+	
+	@Autowired
+    private TestRestTemplate restTemplate;
+	
+	@Autowired
 	private UserToGroupController userToGroupController;
+	
+	@MockBean
+	private GroupDelegate groupDelegate;
+	
+    @LocalServerPort
+    private int port;
 	
 	private Group testGroupBean;
 	
 	private List<User> userList;
 	
 	private User user;
+	
+	private String URL;
+	
+	private HttpEntity<Void> request;
 	
 	@Before
 	public void init() {
@@ -50,16 +68,25 @@ public class UserToGroupControllerTest {
 		userList.add(createUserForTest());
 		userList.add(createUserForTest());
 		userList.add(createUserForTest());		
+		
+		URL = "http://localhost:" + String.valueOf(port) + "/userToGroup/";
+		
+		HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        request = new HttpEntity<Void>(headers);
 	}
 	
 	@Test
 	public void fetchUsersByGroupName()
 	{
 		when(groupDelegate.fetchUsersByGroupName(testGroupBean.getGroupName())).thenReturn(userList);
-		ResponseEntity<List<User>> responseEntity =  userToGroupController.fetchUsersByGroupName(testGroupBean.getGroupName());
+		
+		//ResponseEntity<List<User>> responseEntity =  userToGroupController.fetchUsersByGroupName(testGroupBean.getGroupName());
+		ResponseEntity<Group> responseEntity = restTemplate
+				.exchange(URL+testGroupBean.getGroupName(), HttpMethod.POST, request, Group.class);
 		
 		verify(groupDelegate, times(1)).fetchUsersByGroupName(testGroupBean.getGroupName());
-		assertArrayEquals(userList.toArray(), responseEntity.getBody().toArray());
+		assertArrayEquals(userList, responseEntity.getBody());
 	}
 	
 	@Test

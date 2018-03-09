@@ -132,11 +132,13 @@ public class UserResourceControllerTest {
     @Test
     public void updateUserControllerTest_Ok() {
         logger.info("update user controller test-ok");
+        
         user.setIduser(1);
         when(chatDao.selectUserById(1)).thenReturn(user);
         when(chatDao.updateUser(user)).thenReturn(1);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        
         HttpEntity<User> request = new HttpEntity<User>(user, headers);
         ResponseEntity<User> response = restTemplate.exchange("http://localhost:" + String.valueOf(port) + "/user/resources/updateUser", HttpMethod.PUT, request, User.class);
         assertEquals("Status code must be 200", HttpStatus.OK, response.getStatusCode());
@@ -173,10 +175,12 @@ public class UserResourceControllerTest {
         logger.info("select user by id controller test-ok");
         user.setIduser(1);
         when(chatDao.selectUserById(1)).thenReturn(user);
+        
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Void> request = new HttpEntity<Void>(headers);
         ResponseEntity<User> response = restTemplate.getForEntity("http://localhost:" + String.valueOf(port) + "/user/resources/getUserById/1", User.class);
+        
         System.out.println(response.getBody() + user.toString());
         assertEquals("Status code must be 200", HttpStatus.OK, response.getStatusCode());
         assertEquals("Espected user", user, response.getBody());
